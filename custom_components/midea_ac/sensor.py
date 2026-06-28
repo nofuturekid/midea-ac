@@ -178,6 +178,18 @@ async def async_setup_entry(
             "Louver angle",
         )
     )
+    # Indoor unit code/version string (read-only). Only present when reported.
+    if getattr(device, "in_version", None) is not None:
+        entities.append(
+            MideaNewSensor(
+                coordinator,
+                "in_version",
+                None,
+                None,
+                "Firmware Version",
+                state_class=None,
+            )
+        )
     # Only add energy sensors if device supports energy requests
     if hasattr(device, "enable_energy_usage_requests"):
 

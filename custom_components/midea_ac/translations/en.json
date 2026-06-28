@@ -393,6 +393,9 @@
       },
       "pmv": {
         "name": "PMV comfort"
+      },
+      "parent_control": {
+        "name": "Child lock"
       }
     }
   }

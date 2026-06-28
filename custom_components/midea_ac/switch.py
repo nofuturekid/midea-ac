@@ -1,4 +1,5 @@
 """Switch platform for Midea Smart AC."""
+
 from __future__ import annotations
 
 import logging
@@ -35,10 +36,14 @@ async def async_setup_entry(
         # TODO Check supports_display_control ?
         entities.append(MideaDisplaySwitch(coordinator))
 
-    if hasattr(device, "breeze_away") and getattr(device, "supports_breeze_away", False):
+    if hasattr(device, "breeze_away") and getattr(
+        device, "supports_breeze_away", False
+    ):
         entities.append(MideaSwitch(coordinator, "breeze_away"))
 
-    if hasattr(device, "breeze_mild") and getattr(device, "supports_breeze_mild", False):
+    if hasattr(device, "breeze_mild") and getattr(
+        device, "supports_breeze_mild", False
+    ):
         entities.append(MideaSwitch(coordinator, "breeze_mild"))
 
     if hasattr(device, "breezeless") and getattr(device, "supports_breezeless", False):
@@ -53,34 +58,64 @@ async def async_setup_entry(
     if hasattr(device, "purifier"):
         # AC has on/off purifier
         if getattr(device, "supports_purifier", False):
-            entities.append(MideaSwitch(coordinator,
-                                        "purifier",
-                                        entity_category=EntityCategory.CONFIG))
+            entities.append(
+                MideaSwitch(
+                    coordinator, "purifier", entity_category=EntityCategory.CONFIG
+                )
+            )
 
         # Create switch for CC purifier if only 2 modes supported
         if len(getattr(device, "supported_purifier_modes", [])) == 2:
-            entities.append(MideaSwitch(coordinator,
-                                        "purifier",
-                                        entity_category=EntityCategory.CONFIG,
-                                        state_map={
-                                            False: device.PurifierMode.OFF,
-                                            True: device.PurifierMode.ON,
-                                        }))
+            entities.append(
+                MideaSwitch(
+                    coordinator,
+                    "purifier",
+                    entity_category=EntityCategory.CONFIG,
+                    state_map={
+                        False: device.PurifierMode.OFF,
+                        True: device.PurifierMode.ON,
+                    },
+                )
+            )
 
     # Fresh air (新风) on/off. Gated by capability since it's a B5 feature.
     if hasattr(device, "fresh_air") and getattr(device, "supports_fresh_air", False):
-        entities.append(MideaSwitch(coordinator, "fresh_air",
-                                    entity_category=EntityCategory.CONFIG))
+        entities.append(
+            MideaSwitch(coordinator, "fresh_air",
+                        entity_category=EntityCategory.CONFIG)
+        )
+
+    # Child lock (parent control). Only present when the device reported a value.
+    if getattr(device, "parent_control", None) is not None:
+        entities.append(
+            MideaSwitch(
+                coordinator, "parent_control", entity_category=EntityCategory.CONFIG
+            )
+        )
 
     # Extended classic-protocol toggles. Most have no capability bit, so we
     # create them disabled-by-default and let users enable the ones their unit
     # actually supports.
-    for prop in ("power_save", "low_frequency_fan", "comfort_sleep", "diy",
-                 "smart_eye", "ventilation", "anti_cold", "night_light", "pmv"):
+    for prop in (
+        "power_save",
+        "low_frequency_fan",
+        "comfort_sleep",
+        "diy",
+        "smart_eye",
+        "ventilation",
+        "anti_cold",
+        "night_light",
+        "pmv",
+    ):
         if hasattr(device, prop):
-            entities.append(MideaSwitch(coordinator, prop,
-                                        entity_category=EntityCategory.CONFIG,
-                                        enabled_default=False))
+            entities.append(
+                MideaSwitch(
+                    coordinator,
+                    prop,
+                    entity_category=EntityCategory.CONFIG,
+                    enabled_default=False,
+                )
+            )
 
     add_entities(entities)
 
@@ -102,9 +137,7 @@ class MideaDisplaySwitch(MideaCoordinatorEntity, SwitchEntity):
     def device_info(self) -> dict:
         """Return info for device registry."""
         return {
-            "identifiers": {
-                (DOMAIN, self._device.id)
-            },
+            "identifiers": {(DOMAIN, self._device.id)},
         }
 
     @property
@@ -141,21 +174,24 @@ class MideaDisplaySwitch(MideaCoordinatorEntity, SwitchEntity):
 class MideaSwitch(MideaCoordinatorEntity, SwitchEntity):
     """Generic switch for Midea AC."""
 
-    def __init__(self,
-                 coordinator: MideaDeviceUpdateCoordinator,
-                 prop: str,
-                 translation_key: str | None = None,
-                 *,
-                 entity_category: EntityCategory | None = None,
-                 state_map: Mapping[bool, Any] | None = None,
-                 enabled_default: bool = True
-                 ) -> None:
+    def __init__(
+        self,
+        coordinator: MideaDeviceUpdateCoordinator,
+        prop: str,
+        translation_key: str | None = None,
+        *,
+        entity_category: EntityCategory | None = None,
+        state_map: Mapping[bool, Any] | None = None,
+        enabled_default: bool = True,
+    ) -> None:
 
         MideaCoordinatorEntity.__init__(self, coordinator)
 
         self._prop = prop
         self._entity_category = entity_category
-        self._attr_translation_key = translation_key if translation_key is not None else prop
+        self._attr_translation_key = (
+            translation_key if translation_key is not None else prop
+        )
         self._state_map = state_map
         self._attr_entity_registry_enabled_default = enabled_default
 
@@ -178,9 +214,7 @@ class MideaSwitch(MideaCoordinatorEntity, SwitchEntity):
     def device_info(self) -> dict:
         """Return info for device registry."""
         return {
-            "identifiers": {
-                (DOMAIN, self._device.id)
-            },
+            "identifiers": {(DOMAIN, self._device.id)},
         }
 
     @property
@@ -212,7 +246,7 @@ class MideaSwitch(MideaCoordinatorEntity, SwitchEntity):
 
         # Convert state if necessary
         if self._state_map:
-            state = (state == self._state_map.get(True))
+            state = state == self._state_map.get(True)
 
         return state
 
