@@ -4,38 +4,22 @@ from __future__ import annotations
 
 import logging
 
-from homeassistant.components.sensor import (
-    SensorDeviceClass,
-    SensorEntity,
-    SensorStateClass,
-)
+from homeassistant.components.sensor import (SensorDeviceClass, SensorEntity,
+                                             SensorStateClass)
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    PERCENTAGE,
-    UnitOfEnergy,
-    UnitOfPower,
-    UnitOfTemperature,
-    UnitOfFrequency,
-    UnitOfElectricCurrent,
-    UnitOfElectricPotential,
-)
+from homeassistant.const import (PERCENTAGE, UnitOfElectricCurrent,
+                                 UnitOfElectricPotential, UnitOfEnergy,
+                                 UnitOfFrequency, UnitOfPower,
+                                 UnitOfTemperature)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from msmart.utils import MideaIntEnum
 
-from .const import (
-    CONF_ENERGY_DATA_FORMAT,
-    CONF_ENERGY_DATA_SCALE,
-    CONF_ENERGY_SENSOR,
-    CONF_POWER_SENSOR,
-    DOMAIN,
-    EnergyFormat,
-)
-from .coordinator import (
-    MideaCoordinatorEntity,
-    MideaDeviceUpdateCoordinator,
-    MideaGroup5Entity,
-)
+from .const import (CONF_ENERGY_DATA_FORMAT, CONF_ENERGY_DATA_SCALE,
+                    CONF_ENERGY_SENSOR, CONF_POWER_SENSOR, DOMAIN,
+                    EnergyFormat)
+from .coordinator import (MideaCoordinatorEntity, MideaDeviceUpdateCoordinator,
+                          MideaGroup5Entity)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -188,7 +172,8 @@ async def async_setup_entry(
             return format, scale
 
         # Configure energy format
-        energy_data_format, energy_scale = _get_energy_config(CONF_ENERGY_SENSOR)
+        energy_data_format, energy_scale = _get_energy_config(
+            CONF_ENERGY_SENSOR)
         _LOGGER.info(
             "Using energy format %r (scale: %f) for device ID %s.",
             energy_data_format,

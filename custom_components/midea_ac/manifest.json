@@ -9,7 +9,7 @@
   "issue_tracker": "https://github.com/nofuturekid/midea-ac/issues",
   "loggers": ["msmart"],
   "requirements": [
-    "msmart-ng @ git+https://github.com/nofuturekid/midea-msmart.git@main",
+    "msmart-ng@git+https://github.com/nofuturekid/midea-msmart.git@main",
     "pyyaml"
   ],
   "version": "2026.6.28"
