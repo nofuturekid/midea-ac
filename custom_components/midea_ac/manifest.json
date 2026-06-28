@@ -1,20 +1,16 @@
 {
   "domain": "midea_ac",
   "name": "Midea Smart AC",
-  "codeowners": [
-    "@gilbertorconde"
-  ],
+  "codeowners": ["@nofuturekid"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/gilbertorconde/midea-ac",
+  "documentation": "https://github.com/nofuturekid/midea-ac",
   "iot_class": "local_polling",
-  "issue_tracker": "https://github.com/gilbertorconde/midea-ac/issues",
-  "loggers": [
-    "msmart"
-  ],
+  "issue_tracker": "https://github.com/nofuturekid/midea-ac/issues",
+  "loggers": ["msmart"],
   "requirements": [
-    "msmart-ng @ git+https://github.com/gilbertorconde/midea-msmart.git@main",
+    "msmart-ng @ git+https://github.com/nofuturekid/midea-msmart.git@main",
     "pyyaml"
   ],
-  "version": "2026.4.0"
+  "version": "2026.6.28"
 }

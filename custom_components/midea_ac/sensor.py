@@ -1,22 +1,41 @@
 """Sensor platform for Midea Smart AC."""
+
 from __future__ import annotations
 
 import logging
 
-from homeassistant.components.sensor import (SensorDeviceClass, SensorEntity,
-                                             SensorStateClass)
+from homeassistant.components.sensor import (
+    SensorDeviceClass,
+    SensorEntity,
+    SensorStateClass,
+)
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (PERCENTAGE, UnitOfEnergy, UnitOfPower,
-                                 UnitOfTemperature)
+from homeassistant.const import (
+    PERCENTAGE,
+    UnitOfEnergy,
+    UnitOfPower,
+    UnitOfTemperature,
+    UnitOfFrequency,
+    UnitOfElectricCurrent,
+    UnitOfElectricPotential,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from msmart.utils import MideaIntEnum
 
-from .const import (CONF_ENERGY_DATA_FORMAT, CONF_ENERGY_DATA_SCALE,
-                    CONF_ENERGY_SENSOR, CONF_POWER_SENSOR, DOMAIN,
-                    EnergyFormat)
-from .coordinator import (MideaCoordinatorEntity, MideaDeviceUpdateCoordinator,
-                          MideaGroup5Entity)
+from .const import (
+    CONF_ENERGY_DATA_FORMAT,
+    CONF_ENERGY_DATA_SCALE,
+    CONF_ENERGY_SENSOR,
+    CONF_POWER_SENSOR,
+    DOMAIN,
+    EnergyFormat,
+)
+from .coordinator import (
+    MideaCoordinatorEntity,
+    MideaDeviceUpdateCoordinator,
+    MideaGroup5Entity,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -52,33 +71,138 @@ async def async_setup_entry(
         ),
     ]
 
-    if hasattr(device, "indoor_humidity") and getattr(device, "supports_humidity", False):
-        entities.append(MideaSensor(
+    if hasattr(device, "indoor_humidity") and getattr(
+        device, "supports_humidity", False
+    ):
+        entities.append(
+            MideaSensor(
+                coordinator,
+                "indoor_humidity",
+                SensorDeviceClass.HUMIDITY,
+                PERCENTAGE,
+                "indoor_humidity",
+            )
+        )
+    # outdoor_fan_speed is registered below via the group5-gated MideaGroup5Sensor
+    # (upstream); TurboLed's unconditional duplicate was dropped to avoid a
+    # colliding unique_id.
+    entities.append(
+        MideaBoolSensor(
             coordinator,
-            "indoor_humidity",
-            SensorDeviceClass.HUMIDITY,
-            PERCENTAGE,
-            "indoor_humidity",
-        ))
-
+            "defrost_active",
+            None,
+            "",
+            "Defrost",
+        )
+    )
+    entities.append(
+        MideaNewSensor(
+            coordinator,
+            "compressor_frequency",
+            SensorDeviceClass.FREQUENCY,
+            UnitOfFrequency.HERTZ,
+            "Commpressor Frequency",
+        )
+    )
+    entities.append(
+        MideaNewSensor(
+            coordinator,
+            "outdoor_unit_total_current",
+            SensorDeviceClass.CURRENT,
+            UnitOfElectricCurrent.AMPERE,
+            "Current",
+        )
+    )
+    entities.append(
+        MideaNewSensor(
+            coordinator,
+            "outdoor_unit_voltage",
+            SensorDeviceClass.VOLTAGE,
+            UnitOfElectricPotential.VOLT,
+            "Voltage",
+        )
+    )
+    entities.append(
+        MideaNewSensor(
+            coordinator,
+            "T2",
+            SensorDeviceClass.TEMPERATURE,
+            UnitOfTemperature.CELSIUS,
+            "Indoor coil temperature (T2)",
+        )
+    )
+    entities.append(
+        MideaNewSensor(
+            coordinator,
+            "T3",
+            SensorDeviceClass.TEMPERATURE,
+            UnitOfTemperature.CELSIUS,
+            "Outdoor coil temperature (T3)",
+        )
+    )
+    entities.append(
+        MideaNewSensor(
+            coordinator,
+            "TP",
+            SensorDeviceClass.TEMPERATURE,
+            UnitOfTemperature.CELSIUS,
+            "Discharge temperature (TP)",
+        )
+    )
+    entities.append(
+        MideaNewSensor(
+            coordinator,
+            "indoor_fan_speed",
+            None,
+            "",
+            "Indoor fan speed",
+        )
+    )
+    entities.append(
+        MideaNewSensor(
+            coordinator,
+            "outdoor_unit_power",
+            SensorDeviceClass.POWER,
+            UnitOfPower.WATT,
+            "Power",
+        )
+    )
+    entities.append(
+        MideaNewSensor(
+            coordinator,
+            "louver_angle",
+            None,
+            "",
+            "Louver angle",
+        )
+    )
     # Only add energy sensors if device supports energy requests
     if hasattr(device, "enable_energy_usage_requests"):
+
         def _get_energy_config(key: str) -> tuple[EnergyFormat, float]:
             config = config_entry.options.get(key)
             format = device.EnergyDataFormat.get_from_name(
-                config.get(CONF_ENERGY_DATA_FORMAT).upper())
+                config.get(CONF_ENERGY_DATA_FORMAT).upper()
+            )
             scale = config.get(CONF_ENERGY_DATA_SCALE)
             return format, scale
 
         # Configure energy format
-        energy_data_format, energy_scale = _get_energy_config(
-            CONF_ENERGY_SENSOR)
+        energy_data_format, energy_scale = _get_energy_config(CONF_ENERGY_SENSOR)
         _LOGGER.info(
-            "Using energy format %r (scale: %f) for device ID %s.", energy_data_format, energy_scale, coordinator.device.id)
+            "Using energy format %r (scale: %f) for device ID %s.",
+            energy_data_format,
+            energy_scale,
+            coordinator.device.id,
+        )
 
         power_data_format, power_scale = _get_energy_config(CONF_POWER_SENSOR)
         _LOGGER.info(
-            "Using power format %r (scale: %f) for device ID %s.", power_data_format, power_scale, coordinator.device.id)
+            "Using power format %r (scale: %f) for device ID %s.",
+            power_data_format,
+            power_scale,
+            coordinator.device.id,
+        )
 
         entities.extend(
             [
@@ -111,17 +235,22 @@ async def async_setup_entry(
                     "real_time_power_usage",
                     format=power_data_format,
                     scale=power_scale,
-                )
-            ])
+                ),
+            ]
+        )
 
-    if hasattr(device, "outdoor_fan_speed") and hasattr(device, "enable_group5_data_requests"):
-        entities.append(MideaGroup5Sensor(
-            coordinator,
-            "outdoor_fan_speed",
-            None,
-            None,
-            "outdoor_fan_speed",
-        ))
+    if hasattr(device, "outdoor_fan_speed") and hasattr(
+        device, "enable_group5_data_requests"
+    ):
+        entities.append(
+            MideaGroup5Sensor(
+                coordinator,
+                "outdoor_fan_speed",
+                None,
+                None,
+                "outdoor_fan_speed",
+            )
+        )
 
     add_entities(entities)
 
@@ -129,15 +258,16 @@ async def async_setup_entry(
 class MideaSensor(MideaCoordinatorEntity, SensorEntity):
     """Generic sensor class for Midea AC."""
 
-    def __init__(self,
-                 coordinator: MideaDeviceUpdateCoordinator,
-                 prop: str,
-                 device_class: SensorDeviceClass | None,
-                 unit: str | None,
-                 translation_key: str | None = None,
-                 *,
-                 state_class: SensorStateClass = SensorStateClass.MEASUREMENT,
-                 ) -> None:
+    def __init__(
+        self,
+        coordinator: MideaDeviceUpdateCoordinator,
+        prop: str,
+        device_class: SensorDeviceClass | None,
+        unit: str | None,
+        translation_key: str | None = None,
+        *,
+        state_class: SensorStateClass = SensorStateClass.MEASUREMENT,
+    ) -> None:
         MideaCoordinatorEntity.__init__(self, coordinator)
 
         self._prop = prop
@@ -150,9 +280,7 @@ class MideaSensor(MideaCoordinatorEntity, SensorEntity):
     def device_info(self) -> dict:
         """Return info for device registry."""
         return {
-            "identifiers": {
-                (DOMAIN, self._device.id)
-            },
+            "identifiers": {(DOMAIN, self._device.id)},
         }
 
     @property
@@ -193,14 +321,35 @@ class MideaSensor(MideaCoordinatorEntity, SensorEntity):
         return getattr(self._device, self._prop, None)
 
 
+class MideaNewSensor(MideaSensor):
+    def __init__(self, *args, **kwargs) -> None:
+        MideaSensor.__init__(self, *args, **kwargs)
+
+        self._attr_name = self._attr_translation_key
+        self._attr_translation_key = None
+        self._attr_has_entity_name = False
+
+
+class MideaBoolSensor(MideaSensor):
+    def __init__(self, *args, **kwargs) -> None:
+        MideaNewSensor.__init__(self, *args, **kwargs)
+
+    @property
+    def native_value(self) -> int | None:
+        """Return the current native value."""
+        state = getattr(self._device, self._prop, None)
+        if state:
+            return 1
+        else:
+            return 0
+
+
 class MideaEnergySensor(MideaSensor):
     """Energy sensor class for Midea AC."""
 
-    def __init__(self,
-                 *args,
-                 format: MideaIntEnum,
-                 scale: float = 1.0,
-                 **kwargs) -> None:
+    def __init__(
+        self, *args, format: MideaIntEnum, scale: float = 1.0, **kwargs
+    ) -> None:
         MideaSensor.__init__(self, *args, **kwargs)
 
         self._format = format
@@ -243,10 +392,7 @@ class MideaEnergySensor(MideaSensor):
 class MideaGroup5Sensor(MideaSensor, MideaGroup5Entity):
     """Sensor for Midea AC group 5 data."""
 
-    def __init__(self,
-                 *args,
-                 **kwargs
-                 ) -> None:
+    def __init__(self, *args, **kwargs) -> None:
         MideaSensor.__init__(self, *args, **kwargs)
 
         # Group5 sensors start disabled in case device doesn't support them
