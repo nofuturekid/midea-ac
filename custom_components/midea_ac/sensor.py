@@ -91,6 +91,24 @@ async def async_setup_entry(
     entities.append(
         MideaNewSensor(
             coordinator,
+            "compressor_current",
+            SensorDeviceClass.CURRENT,
+            UnitOfElectricCurrent.AMPERE,
+            "Compressor Current",
+        )
+    )
+    entities.append(
+        MideaNewSensor(
+            coordinator,
+            "indoor_fan_frequency",
+            SensorDeviceClass.FREQUENCY,
+            UnitOfFrequency.HERTZ,
+            "Indoor Fan Frequency",
+        )
+    )
+    entities.append(
+        MideaNewSensor(
+            coordinator,
             "outdoor_unit_total_current",
             SensorDeviceClass.CURRENT,
             UnitOfElectricCurrent.AMPERE,
