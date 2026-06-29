@@ -85,7 +85,7 @@ async def async_setup_entry(
             "compressor_frequency",
             SensorDeviceClass.FREQUENCY,
             UnitOfFrequency.HERTZ,
-            "Commpressor Frequency",
+            "Compressor Frequency",
         )
     )
     entities.append(
